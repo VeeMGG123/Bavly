@@ -1,0 +1,17 @@
+HOW TO USE THIS IMAGES FOLDER
+==============================
+Developed By Peter Medhat
+
+1. To use your own photos:
+   - Place your photos directly inside this "images" folder.
+   - For example:
+     - images/envelope.jpg
+     - images/photo1.jpg
+     - images/photo2.jpg
+     - images/photo3.jpg
+     - images/photo4.jpg
+
+2. Open "config.js" in any text editor (Notepad, VS Code, TextEdit).
+3. Ensure the names in config.js match your filenames.
+4. You can also paste direct web image URLs (https://...) directly in config.js!
+5. Save config.js and double-click index.html to enjoy your website!
