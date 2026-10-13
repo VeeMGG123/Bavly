@@ -18,7 +18,7 @@
 window.CONFIG = {
   // ------------------------------------------------------------------
   // 1. SECRET LOGIN PASSWORD
-  // Change "forever" to any secret word or date you share (e.g. "love", "honey", "2024")
+  // Change "29/6/2026" to any secret word or date you share (e.g. "love", "honey", "2024")
   // ------------------------------------------------------------------
   password: "29/6/2026",
 
