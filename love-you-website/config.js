@@ -20,7 +20,7 @@ window.CONFIG = {
   // 1. SECRET LOGIN PASSWORD
   // Change "forever" to any secret word or date you share (e.g. "love", "honey", "2024")
   // ------------------------------------------------------------------
-  password: "forever",
+  password: "29/6/2026",
 
   // ------------------------------------------------------------------
   // 2. NAMES & HEADERS
@@ -34,7 +34,7 @@ window.CONFIG = {
   // 3. HERO & ENVELOPE SECTION
   // ------------------------------------------------------------------
   heroTag: "OPEN WHEN YOU'RE READY",
-  heroHeading: "A little note. A lot of love.",
+  heroHeading: "A little note. A lot of love From Bavly To Maroska.",
   heroSubtitle: "Click the sealed envelope below to uncover what my heart has been holding.",
 
   /**
@@ -50,7 +50,7 @@ window.CONFIG = {
   // Line breaks and paragraphs are preserved.
   // Special characters, emojis, and Arabic text are fully supported!
   // ------------------------------------------------------------------
-  letterHeading: "A note for you",
+  letterHeading: "A Note for you",
   letterDate: "October 13, 2026",
   loveLetter: `Dear Maroska, ❤️
 
@@ -72,19 +72,19 @@ You have a special place in my heart, and I'm really lucky to have someone like 
   photos: [
     {
       url: "images/photo1.jpg",
-      caption: "ذكريات طفولتنا الجميلة وبركة زمان 🤍"
+      caption: "🤍الصوره دي هي اللي خليتنا نبدأ كلام "
     },
     {
       url: "images/photo2.jpg",
-      caption: "ضحكتك السكر من وإنتي صغيرة يا أحلى أخت 🌸"
+      caption: "🤍تغفيله ليكي وانتي صغيره"
     },
     {
       url: "images/photo3.jpg",
-      caption: "سهراتنا ومكالماتنا اللي بالساعات ومابنشبعش كلام 📞🤍"
+      caption: "🤍📞سهراتنا ومكالماتنا اللي بالساعات ومابنشبعش كلام"
     },
     {
       url: "images/photo4.jpg",
-      caption: "أرنوبتييييي 🐰🥕 أجمل رسمة وذكريات"
+      caption: "🤍بحبك يا أرنوبتييييي"
     }
   ],
 
