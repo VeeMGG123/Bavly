@@ -8,7 +8,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Read configuration or provide safe romantic defaults
   const config = window.CONFIG || {
-    password: 'forever',
+    password: '29/6/2026',
     recipientName: 'My Dearest Love',
     senderName: 'Yours Always',
     websiteLogo: 'little love note ♥',
@@ -420,10 +420,10 @@ function initGallery(config) {
       const newPhotos = [];
       let loaded = 0;
       const defaultCaptions = [
-        'ذكريات طفولتنا الجميلة وبركة زمان 🤍',
-        'ضحكتك السكر من وإنتي صغيرة يا أحلى أخت 🌸',
-        'سهراتنا ومكالماتنا اللي بالساعات ومابنشبعش كلام 📞🤍',
-        'أرنوبتييييي 🐰🥕 أجمل رسمة وذكريات'
+        '🤍الصوره دي هي اللي خلتنا نبدأ نتكلم',
+        '🤍تغفيله ليكي وانت صغيره',
+        '📞🤍سهراتنا ومكالماتنا اللي بالساعات ومابنشبعش كلام ',
+        '🤍بحبك يا أرنوبتييييي '
       ];
 
       Array.from(files).forEach((file, index) => {
