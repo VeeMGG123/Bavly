@@ -46,20 +46,22 @@ const DEFAULT_CONFIG: SiteConfig = {
   recipientName: "Maroska",
   senderName: "Bavly",
   title: "A Little Piece of My Heart",
-  message: `Dear Maroska,
-
-Some people make ordinary days feel special without even trying. You are one of those people.
-
-I made this little website especially for you, to keep a few memories and words that sometimes are easier to write than to say.
-
-I hope life gives you countless reasons to smile, beautiful memories to look back on, and wonderful moments to look forward to.
-
-Thank you for being you, for the laughs, the little moments, and the memories that make life brighter.
-
-You are appreciated more than you know.
-
-With lots of love,
-Bavly ❤️`,
+    message: [
+    "Dear Maroska,",
+    "",
+    "Some people make ordinary days feel special without even trying. You are one of those people.",
+    "",
+    "I made this little website especially for you, to keep a few memories and words that sometimes are easier to write than to say.",
+    "",
+    "I hope life gives you countless reasons to smile, beautiful memories to look back on, and wonderful moments to look forward to.",
+    "",
+    "Thank you for being you, for the laughs, the little moments, and the memories that make life brighter.",
+    "",
+    "You are appreciated more than you know.",
+    "",
+    "With lots of love,",
+    "Bavly ❤️",
+  ].join("\n"),
   // Put the YouTube ID for "مع الأيام" in Website Settings.
   youtubeVideoId: "",
   photos: [
