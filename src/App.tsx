@@ -1,10 +1,5 @@
 ```tsx
-import {
-  useEffect,
-  useState,
-  type ChangeEvent,
-  type FormEvent,
-} from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import {
   Heart,
   LockKeyhole,
@@ -17,7 +12,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Upload,
-  Sparkles,
 } from "lucide-react";
 
 type PhotoItem = {
@@ -35,18 +29,12 @@ type SiteConfig = {
   photos: PhotoItem[];
 };
 
-declare global {
-  interface Window {
-    CONFIG?: Partial<SiteConfig>;
-  }
-}
-
 const DEFAULT_CONFIG: SiteConfig = {
   password: "29/6/2026",
   recipientName: "Maroska",
   senderName: "Bavly",
   title: "A Little Piece of My Heart",
-    message: [
+  message: [
     "Dear Maroska,",
     "",
     "Some people make ordinary days feel special without even trying. You are one of those people.",
@@ -62,7 +50,6 @@ const DEFAULT_CONFIG: SiteConfig = {
     "With lots of love,",
     "Bavly ❤️",
   ].join("\n"),
-  // Put the YouTube ID for "مع الأيام" in Website Settings.
   youtubeVideoId: "",
   photos: [
     { src: "/images/photo1.jpg", caption: "A memory to keep ✨" },
@@ -73,39 +60,32 @@ const DEFAULT_CONFIG: SiteConfig = {
 };
 
 function readConfig(): SiteConfig {
-  const savedConfig = typeof window !== "undefined" ? window.CONFIG : undefined;
-
-  return {
-    ...DEFAULT_CONFIG,
-    ...savedConfig,
-    photos: savedConfig?.photos?.length
-      ? savedConfig.photos
-      : DEFAULT_CONFIG.photos,
-  };
+  return DEFAULT_CONFIG;
 }
 
-function getYouTubeId(value: string) {
+function getYouTubeId(value: string): string {
   const input = value.trim();
 
-  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) {
+    return input;
+  }
 
   try {
     const url = new URL(input);
 
-    if (url.hostname.includes("youtu.be")) {
+    if (url.hostname.indexOf("youtu.be") !== -1) {
       return url.pathname.slice(1).split("/")[0];
     }
 
-    if (url.searchParams.get("v")) {
-      return url.searchParams.get("v");
-    }
+    const videoId = url.searchParams.get("v");
+    if (videoId) return videoId;
 
     const parts = url.pathname.split("/");
-    const embedIndex = parts.findIndex((part) =>
-      ["embed", "shorts", "live"].includes(part),
-    );
+    const index = parts.findIndex(function (part) {
+      return ["embed", "shorts", "live"].includes(part);
+    });
 
-    if (embedIndex !== -1) return parts[embedIndex + 1] || "";
+    if (index !== -1) return parts[index + 1] || "";
   } catch {
     return "";
   }
@@ -129,32 +109,37 @@ export default function App() {
   const youtubeId = getYouTubeId(config.youtubeVideoId);
   const currentPhoto = config.photos[photoIndex];
 
-  useEffect(() => {
+  useEffect(function () {
     try {
-      const savedPhotos = localStorage.getItem("bavly_user_photos_v2");
-      if (!savedPhotos || window.CONFIG?.photos?.length) return;
+      const saved = localStorage.getItem("bavly_user_photos_v2");
+      if (!saved) return;
 
-      const parsed = JSON.parse(savedPhotos) as PhotoItem[];
+      const parsed = JSON.parse(saved) as PhotoItem[];
 
-      if (Array.isArray(parsed) && parsed.length) {
-        setConfig((current) => ({ ...current, photos: parsed }));
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        setConfig(function (current) {
+          return { ...current, photos: parsed };
+        });
+        setDraft(function (current) {
+          return { ...current, photos: parsed };
+        });
       }
     } catch (err) {
       console.error("Could not load saved photos:", err);
     }
   }, []);
 
-  // The intro runs after the correct password is entered.
-  // Music starts when the intro finishes; the browser may still require a click.
-  useEffect(() => {
+  useEffect(function () {
     if (!unlocked || introFinished) return;
 
-    const timer = window.setTimeout(() => {
+    const timer = window.setTimeout(function () {
       setIntroFinished(true);
       setMusicOn(true);
     }, 5200);
 
-    return () => window.clearTimeout(timer);
+    return function () {
+      window.clearTimeout(timer);
+    };
   }, [unlocked, introFinished]);
 
   function checkPassword(event: FormEvent<HTMLFormElement>) {
@@ -175,7 +160,7 @@ export default function App() {
     try {
       localStorage.setItem(
         "bavly_user_photos_v2",
-        JSON.stringify(updated.photos),
+        JSON.stringify(updated.photos)
       );
     } catch (err) {
       console.error("Could not save photos:", err);
@@ -186,26 +171,27 @@ export default function App() {
   }
 
   function uploadPhotos(event: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? []).filter((file) =>
-      file.type.startsWith("image/"),
-    );
+    const files = Array.from(event.target.files || []).filter(function (file) {
+      return file.type.startsWith("image/");
+    });
 
-    files.forEach((file) => {
+    files.forEach(function (file) {
       const reader = new FileReader();
 
-      reader.onload = () => {
+      reader.onload = function () {
         if (typeof reader.result !== "string") return;
 
-        setDraft((current) => ({
-          ...current,
-          photos: [
-            ...current.photos,
-            {
-              src: reader.result as string,
-              caption: "A little memory 💗",
-            },
-          ],
-        }));
+        setDraft(function (current) {
+          return {
+            ...current,
+            photos: current.photos.concat([
+              {
+                src: reader.result as string,
+                caption: "A little memory 💗",
+              },
+            ]),
+          };
+        });
       };
 
       reader.readAsDataURL(file);
@@ -215,32 +201,38 @@ export default function App() {
   }
 
   function updatePhotoCaption(index: number, caption: string) {
-    setDraft((current) => ({
-      ...current,
-      photos: current.photos.map((photo, i) =>
-        i === index ? { ...photo, caption } : photo,
-      ),
-    }));
+    setDraft(function (current) {
+      return {
+        ...current,
+        photos: current.photos.map(function (photo, i) {
+          return i === index ? { ...photo, caption: caption } : photo;
+        }),
+      };
+    });
   }
 
   function removePhoto(index: number) {
-    setDraft((current) => ({
-      ...current,
-      photos: current.photos.filter((_, i) => i !== index),
-    }));
+    setDraft(function (current) {
+      return {
+        ...current,
+        photos: current.photos.filter(function (_, i) {
+          return i !== index;
+        }),
+      };
+    });
   }
 
   function changePhoto(direction: number) {
-    if (!config.photos.length) return;
+    if (config.photos.length === 0) return;
 
-    setPhotoIndex(
-      (index) =>
-        (index + direction + config.photos.length) % config.photos.length,
-    );
+    setPhotoIndex(function (index) {
+      return (
+        (index + direction + config.photos.length) % config.photos.length
+      );
+    });
   }
 
-  // Distribute LOVE YOU words along a heart outline.
-  const heartWords = Array.from({ length: 55 }, (_, index) => {
+  const heartWords = Array.from({ length: 55 }, function (_, index) {
     const t = (index / 55) * Math.PI * 2;
     const x = 16 * Math.pow(Math.sin(t), 3);
     const y =
@@ -250,94 +242,39 @@ export default function App() {
         Math.cos(4 * t));
 
     return {
-      left: `${50 + x * 1.7}%`,
-      top: `${48 + y * 1.7}%`,
-      delay: `${index * 0.055}s`,
+      left: String(50 + x * 1.7) + "%",
+      top: String(48 + y * 1.7) + "%",
+      delay: String(index * 0.055) + "s",
     };
   });
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0c0414] text-rose-50 selection:bg-rose-500 selection:text-white">
-      <style>{`
-        @keyframes heart-word-arrive {
-          0% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.15) rotate(-12deg);
-            filter: blur(5px);
-          }
-          70% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1.2) rotate(3deg);
-            filter: blur(0);
-          }
-          100% {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1) rotate(0);
-            filter: blur(0);
-          }
-        }
-
-        @keyframes heart-glow {
-          0%, 100% { opacity: .45; transform: scale(.96); }
-          50% { opacity: 1; transform: scale(1.04); }
-        }
-
-        @keyframes floating-heart {
-          0% { transform: translateY(20px) scale(.8); opacity: 0; }
-          20% { opacity: .7; }
-          100% { transform: translateY(-110vh) scale(1.2); opacity: 0; }
-        }
-
-        .love-heart-word {
-          opacity: 0;
-          animation: heart-word-arrive 1.1s ease-out forwards;
-          text-shadow: 0 0 16px rgba(251,113,133,.6);
-        }
-
-        .heart-glow {
-          animation: heart-glow 2.4s ease-in-out infinite;
-        }
-
-        .floating-heart {
-          position: absolute;
-          bottom: -40px;
-          animation: floating-heart 12s linear infinite;
-          pointer-events: none;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .love-heart-word, .heart-glow, .floating-heart {
-            animation-duration: .01ms !important;
-            animation-iteration-count: 1 !important;
-          }
-        }
-      `}</style>
-
-      {/* Background atmosphere */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-fuchsia-700/20 blur-[110px]" />
         <div className="absolute -bottom-40 -right-20 h-[30rem] w-[30rem] rounded-full bg-rose-600/15 blur-[120px]" />
         <div className="absolute left-1/2 top-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-purple-700/10 blur-[100px]" />
 
-        {Array.from({ length: 12 }, (_, i) => (
-          <span
-            key={i}
-            className="floating-heart text-rose-300/30"
-            style={{
-              left: `${(i * 37 + 8) % 100}%`,
-              animationDelay: `${(i % 6) * -1.8}s`,
-              animationDuration: `${10 + (i % 5) * 2}s`,
-              fontSize: `${12 + (i % 4) * 6}px`,
-            }}
-          >
-            ♥
-          </span>
-        ))}
+        {Array.from({ length: 12 }, function (_, i) {
+          return (
+            <span
+              key={i}
+              className="absolute bottom-[-40px] text-rose-300/30 animate-bounce"
+              style={{
+                left: String((i * 37 + 8) % 100) + "%",
+                animationDelay: String((i % 6) * 0.4) + "s",
+                animationDuration: String(10 + (i % 5) * 2) + "s",
+                fontSize: String(12 + (i % 4) * 6) + "px",
+              }}
+            >
+              ♥
+            </span>
+          );
+        })}
       </div>
 
-      {/* Settings button */}
       <button
-        onClick={() => {
+        onClick={function () {
           setDraft(config);
           setShowSettings(true);
         }}
@@ -347,7 +284,6 @@ export default function App() {
         <Settings size={19} />
       </button>
 
-      {/* Password screen */}
       {!unlocked ? (
         <section className="relative z-10 flex min-h-screen items-center justify-center px-5 py-16">
           <div className="w-full max-w-md text-center">
@@ -356,7 +292,7 @@ export default function App() {
               <div className="absolute inset-2 rounded-full border border-rose-300/20" />
               <Heart
                 size={43}
-                className="heart-glow fill-rose-500 text-rose-400"
+                className="animate-pulse fill-rose-500 text-rose-400"
               />
             </div>
 
@@ -377,7 +313,7 @@ export default function App() {
 
             <form
               onSubmit={checkPassword}
-              className="mx-auto max-w-sm rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl shadow-fuchsia-950/20 backdrop-blur-xl sm:p-8"
+              className="mx-auto max-w-sm rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur-xl sm:p-8"
             >
               <div className="mb-5 flex items-center justify-center gap-2 text-sm text-rose-100/80">
                 <LockKeyhole size={16} className="text-rose-300" />
@@ -387,7 +323,7 @@ export default function App() {
               <input
                 type="password"
                 value={password}
-                onChange={(event) => {
+                onChange={function (event) {
                   setPassword(event.target.value);
                   setError("");
                 }}
@@ -416,28 +352,30 @@ export default function App() {
           </div>
         </section>
       ) : !introFinished ? (
-        /* LOVE YOU heart intro */
         <section className="relative z-10 flex min-h-screen flex-col items-center justify-center overflow-hidden px-5 pb-10 text-center">
           <div className="relative h-[min(78vw,420px)] w-[min(78vw,420px)]">
             <div className="absolute inset-0 rounded-full bg-rose-500/10 blur-3xl" />
 
-            {heartWords.map((word, index) => (
-              <span
-                key={index}
-                className="love-heart-word absolute whitespace-nowrap font-serif text-[10px] font-bold text-rose-300 sm:text-sm"
-                style={{
-                  left: word.left,
-                  top: word.top,
-                  animationDelay: word.delay,
-                }}
-              >
-                LOVE YOU
-              </span>
-            ))}
+            {heartWords.map(function (word, index) {
+              return (
+                <span
+                  key={index}
+                  className="absolute whitespace-nowrap font-serif text-[10px] font-bold text-rose-300 animate-pulse sm:text-sm"
+                  style={{
+                    left: word.left,
+                    top: word.top,
+                    transform: "translate(-50%, -50%)",
+                    animationDelay: word.delay,
+                  }}
+                >
+                  LOVE YOU
+                </span>
+              );
+            })}
 
             <Heart
               size={40}
-              className="heart-glow absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 fill-rose-500/20 text-rose-300/70"
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 fill-rose-500/20 text-rose-300/70"
             />
           </div>
 
@@ -450,7 +388,7 @@ export default function App() {
           </p>
 
           <button
-            onClick={() => {
+            onClick={function () {
               setIntroFinished(true);
               setMusicOn(true);
             }}
@@ -460,7 +398,6 @@ export default function App() {
           </button>
         </section>
       ) : (
-        /* Main website */
         <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-5xl flex-col items-center px-5 py-20 sm:px-8">
           {!envelopeOpened ? (
             <div className="my-auto w-full max-w-xl py-10 text-center">
@@ -485,7 +422,9 @@ export default function App() {
               </p>
 
               <button
-                onClick={() => setEnvelopeOpened(true)}
+                onClick={function () {
+                  setEnvelopeOpened(true);
+                }}
                 aria-label="Open your letter"
                 className="group relative mx-auto block w-full max-w-sm text-left transition duration-500 hover:-translate-y-2"
               >
@@ -509,15 +448,13 @@ export default function App() {
                   </div>
                 </div>
               </button>
-
-              <p className="mt-8 text-xs text-rose-100/35">
-                Made with love by {config.senderName}
-              </p>
             </div>
           ) : (
             <div className="w-full">
               <button
-                onClick={() => setEnvelopeOpened(false)}
+                onClick={function () {
+                  setEnvelopeOpened(false);
+                }}
                 className="mb-8 flex items-center gap-2 text-sm text-rose-200/60 hover:text-white"
               >
                 <ArrowLeft size={16} /> Back to the envelope
@@ -560,7 +497,9 @@ export default function App() {
 
               <div className="mt-10 flex flex-wrap justify-center gap-3">
                 <button
-                  onClick={() => setShowGallery(!showGallery)}
+                  onClick={function () {
+                    setShowGallery(!showGallery);
+                  }}
                   className="flex items-center gap-2 rounded-full border border-rose-200/15 bg-white/5 px-6 py-3 text-sm text-rose-100 hover:bg-white/10"
                 >
                   <ImagePlus size={17} />
@@ -568,7 +507,9 @@ export default function App() {
                 </button>
 
                 <button
-                  onClick={() => setMusicOn(!musicOn)}
+                  onClick={function () {
+                    setMusicOn(!musicOn);
+                  }}
                   className="flex items-center gap-2 rounded-full border border-rose-200/15 bg-white/5 px-6 py-3 text-sm text-rose-100 hover:bg-white/10"
                 >
                   {musicOn ? <VolumeX size={17} /> : <Music2 size={17} />}
@@ -598,7 +539,9 @@ export default function App() {
                           />
 
                           <button
-                            onClick={() => changePhoto(-1)}
+                            onClick={function () {
+                              changePhoto(-1);
+                            }}
                             aria-label="Previous photo"
                             className="absolute left-3 rounded-full bg-black/60 p-3 text-white"
                           >
@@ -606,7 +549,9 @@ export default function App() {
                           </button>
 
                           <button
-                            onClick={() => changePhoto(1)}
+                            onClick={function () {
+                              changePhoto(1);
+                            }}
                             aria-label="Next photo"
                             className="absolute right-3 rounded-full bg-black/60 p-3 text-white"
                           >
@@ -620,18 +565,23 @@ export default function App() {
                       </div>
 
                       <div className="mt-4 flex flex-wrap justify-center gap-2">
-                        {config.photos.map((photo, index) => (
-                          <button
-                            key={`${photo.src}-${index}`}
-                            onClick={() => setPhotoIndex(index)}
-                            aria-label={`Show photo ${index + 1}`}
-                            className={`h-2 rounded-full ${
-                              index === photoIndex
-                                ? "w-8 bg-rose-400"
-                                : "w-2 bg-white/20"
-                            }`}
-                          />
-                        ))}
+                        {config.photos.map(function (photo, index) {
+                          return (
+                            <button
+                              key={photo.src + "-" + index}
+                              onClick={function () {
+                                setPhotoIndex(index);
+                              }}
+                              aria-label={"Show photo " + (index + 1)}
+                              className={
+                                "h-2 rounded-full " +
+                                (index === photoIndex
+                                  ? "w-8 bg-rose-400"
+                                  : "w-2 bg-white/20")
+                              }
+                            />
+                          );
+                        })}
                       </div>
                     </>
                   ) : (
@@ -643,29 +593,27 @@ export default function App() {
               )}
             </div>
           )}
-
-          <footer className="mt-16 pb-8 text-center text-[10px] uppercase tracking-[0.35em] text-white/25">
-            Crafted with ♥ by {config.senderName}
-          </footer>
         </section>
       )}
 
-      {/* Music is mounted after the intro. The browser may block autoplay. */}
       {unlocked && introFinished && musicOn && youtubeId && (
         <iframe
-          key={`${youtubeId}-music`}
-          src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&playsinline=1&controls=1`}
+          key={youtubeId + "-music"}
+          src={
+            "https://www.youtube-nocookie.com/embed/" +
+            youtubeId +
+            "?autoplay=1&playsinline=1&controls=1"
+          }
           title="مع الأيام - Our soundtrack"
           allow="autoplay; encrypted-media; picture-in-picture"
           className="fixed bottom-16 right-4 z-40 h-20 w-32 overflow-hidden rounded-xl border border-white/20 bg-black/80 opacity-90 shadow-xl"
         />
       )}
 
-      {/* Settings modal */}
       {showSettings && (
         <div
           className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/75 px-4 py-6 backdrop-blur-md sm:items-center"
-          onMouseDown={(event) => {
+          onMouseDown={function (event) {
             if (event.target === event.currentTarget) {
               setShowSettings(false);
             }
@@ -683,7 +631,9 @@ export default function App() {
               </div>
 
               <button
-                onClick={() => setShowSettings(false)}
+                onClick={function () {
+                  setShowSettings(false);
+                }}
                 aria-label="Close settings"
                 className="rounded-full p-2 text-white/60 hover:bg-white/10"
               >
@@ -696,9 +646,9 @@ export default function App() {
                 Recipient name
                 <input
                   value={draft.recipientName}
-                  onChange={(e) =>
-                    setDraft({ ...draft, recipientName: e.target.value })
-                  }
+                  onChange={function (e) {
+                    setDraft({ ...draft, recipientName: e.target.value });
+                  }}
                   className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none"
                 />
               </label>
@@ -707,9 +657,9 @@ export default function App() {
                 Your name
                 <input
                   value={draft.senderName}
-                  onChange={(e) =>
-                    setDraft({ ...draft, senderName: e.target.value })
-                  }
+                  onChange={function (e) {
+                    setDraft({ ...draft, senderName: e.target.value });
+                  }}
                   className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none"
                 />
               </label>
@@ -718,9 +668,9 @@ export default function App() {
                 Password
                 <input
                   value={draft.password}
-                  onChange={(e) =>
-                    setDraft({ ...draft, password: e.target.value })
-                  }
+                  onChange={function (e) {
+                    setDraft({ ...draft, password: e.target.value });
+                  }}
                   className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none"
                 />
               </label>
@@ -729,9 +679,9 @@ export default function App() {
                 Letter title
                 <input
                   value={draft.title}
-                  onChange={(e) =>
-                    setDraft({ ...draft, title: e.target.value })
-                  }
+                  onChange={function (e) {
+                    setDraft({ ...draft, title: e.target.value });
+                  }}
                   className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none"
                 />
               </label>
@@ -741,9 +691,9 @@ export default function App() {
                 <textarea
                   rows={8}
                   value={draft.message}
-                  onChange={(e) =>
-                    setDraft({ ...draft, message: e.target.value })
-                  }
+                  onChange={function (e) {
+                    setDraft({ ...draft, message: e.target.value });
+                  }}
                   className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-black/20 px-4 py-3 leading-7 text-white outline-none"
                 />
               </label>
@@ -752,15 +702,15 @@ export default function App() {
                 YouTube link or video ID for "مع الأيام"
                 <input
                   value={draft.youtubeVideoId}
-                  onChange={(e) =>
-                    setDraft({ ...draft, youtubeVideoId: e.target.value })
-                  }
+                  onChange={function (e) {
+                    setDraft({ ...draft, youtubeVideoId: e.target.value });
+                  }}
                   placeholder="Paste the YouTube link or video ID"
                   className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none"
                 />
                 <span className="mt-2 block text-xs leading-5 text-white/40">
-                  Paste the link to the exact song. Autoplay depends on browser
-                  permissions; use the music button if playback is blocked.
+                  Autoplay depends on browser permissions. Use the music button
+                  if playback is blocked.
                 </span>
               </label>
             </div>
@@ -770,7 +720,7 @@ export default function App() {
                 <div>
                   <h3 className="font-semibold text-white">Photo gallery</h3>
                   <p className="mt-1 text-xs text-white/45">
-                    The default gallery reads from public/images.
+                    Default photos are loaded from public/images.
                   </p>
                 </div>
 
@@ -788,47 +738,53 @@ export default function App() {
               </div>
 
               <div className="space-y-3">
-                {draft.photos.map((photo, index) => (
-                  <div
-                    key={`${photo.src.slice(0, 40)}-${index}`}
-                    className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3"
-                  >
-                    <img
-                      src={photo.src}
-                      alt=""
-                      className="h-14 w-14 rounded-lg bg-black/20 object-cover"
-                    />
-
-                    <input
-                      value={photo.caption}
-                      onChange={(e) =>
-                        updatePhotoCaption(index, e.target.value)
-                      }
-                      aria-label={`Caption for photo ${index + 1}`}
-                      className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none"
-                    />
-
-                    <button
-                      onClick={() => removePhoto(index)}
-                      aria-label={`Remove photo ${index + 1}`}
-                      className="rounded-lg p-2 text-rose-300/70 hover:bg-rose-400/10"
+                {draft.photos.map(function (photo, index) {
+                  return (
+                    <div
+                      key={photo.src.slice(0, 40) + "-" + index}
+                      className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3"
                     >
-                      <X size={17} />
-                    </button>
-                  </div>
-                ))}
+                      <img
+                        src={photo.src}
+                        alt=""
+                        className="h-14 w-14 rounded-lg bg-black/20 object-cover"
+                      />
+
+                      <input
+                        value={photo.caption}
+                        onChange={function (e) {
+                          updatePhotoCaption(index, e.target.value);
+                        }}
+                        aria-label={"Caption for photo " + (index + 1)}
+                        className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white outline-none"
+                      />
+
+                      <button
+                        onClick={function () {
+                          removePhoto(index);
+                        }}
+                        aria-label={"Remove photo " + (index + 1)}
+                        className="rounded-lg p-2 text-rose-300/70 hover:bg-rose-400/10"
+                      >
+                        <X size={17} />
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
 
               <p className="mt-3 text-xs leading-5 text-white/35">
-                Uploaded photos are saved in this browser. To publish photos
-                for everyone, put photo1.jpg, photo2.jpg, photo3.jpg, and
-                photo4.jpg in public/images and redeploy.
+                Uploaded photos are saved in this browser. For the default
+                gallery, put photo1.jpg, photo2.jpg, photo3.jpg, and photo4.jpg
+                inside public/images.
               </p>
             </div>
 
             <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <button
-                onClick={() => setShowSettings(false)}
+                onClick={function () {
+                  setShowSettings(false);
+                }}
                 className="rounded-xl border border-white/10 px-5 py-3 text-sm text-white/70"
               >
                 Cancel
@@ -845,12 +801,11 @@ export default function App() {
         </div>
       )}
 
-      {/* Permanent developer credit */}
-      <div className="pointer-events-none fixed bottom-3 left-0 z-[60] w-full text-center">
+      <footer className="pointer-events-none fixed bottom-3 left-0 z-[60] w-full text-center">
         <p className="text-[10px] font-semibold tracking-[0.25em] text-rose-100/45">
           Developed By PeterMedhat
         </p>
-      </div>
+      </footer>
     </main>
   );
 }
