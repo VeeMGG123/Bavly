@@ -17,7 +17,7 @@ type GalleryPhoto = {
 };
 
 const VISITOR_PASSWORD = "29/6/2026";
-const ADMIN_USER_ID = "5b382fac-5ee4-4cb3-a67c-1249ee840843";
+const ADMIN_USER_ID = "618f63e0-d5cd-4909-94a1-978557086edd";
 
 const DEFAULT_CONFIG: SiteConfig = {
   recipientName: "Maroska",
@@ -178,28 +178,53 @@ export default function App() {
     }
   }
 
-  async function handleAdminLogin(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!supabase) {
-      setNotice("Supabase isn't configured.");
-      return;
-    }
+async function handleAdminLogin(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault();
 
-    setAdminBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({
+  if (!supabase) {
+    setNotice("Supabase isn't configured.");
+    return;
+  }
+
+  setAdminBusy(true);
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: adminEmail.trim(),
       password: adminPassword,
     });
-    setAdminBusy(false);
 
     if (error) {
       setNotice("Admin login failed. Check the email and password.");
       return;
     }
 
+    if (!data.user) {
+      setNotice("Login succeeded, but no user was returned.");
+      return;
+    }
+
     setAdminPassword("");
+
+    // Refresh the app's authentication state
+    const { data: sessionData } = await supabase.auth.getSession();
+
+    if (!sessionData.session) {
+      setNotice("Login succeeded, but the session wasn't found. Please try again.");
+      return;
+    }
+
     setNotice("Admin signed in ❤️");
+
+    // Refresh the app so its admin state can update
+    window.dispatchEvent(new Event("admin-login-success"));
+  } catch (error) {
+    console.error("Admin login error:", error);
+    setNotice("Something went wrong while signing in.");
+  } finally {
+    setAdminBusy(false);
   }
+}
 
   async function handleAdminPasswordReset(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
