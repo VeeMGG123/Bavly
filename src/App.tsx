@@ -14,6 +14,7 @@ type GalleryPhoto = {
   id: string;
   url: string;
   storagePath: string | null;
+  memoryText: string;
 };
 
 const VISITOR_PASSWORD = "29/6/2026";
@@ -80,6 +81,7 @@ export default function App() {
   const [loadingData, setLoadingData] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [savingMemoryId, setSavingMemoryId] = useState<string | null>(null);
   const [draft, setDraft] = useState<SiteConfig>(DEFAULT_CONFIG);
 
   const youtubeId = getYouTubeId(config.musicUrl);
@@ -119,7 +121,7 @@ export default function App() {
               .maybeSingle(),
             supabase!
               .from("gallery_images")
-              .select("id,image_url,storage_path")
+              .select("id,image_url,storage_path,memory_text")
               .order("sort_order", { ascending: true })
               .order("created_at", { ascending: true }),
           ]);
@@ -142,6 +144,7 @@ export default function App() {
             id: photo.id,
             url: photo.image_url,
             storagePath: photo.storage_path ?? null,
+            memoryText: photo.memory_text ?? "",
           }))
         );
       } catch (error) {
@@ -178,53 +181,28 @@ export default function App() {
     }
   }
 
-async function handleAdminLogin(event: FormEvent<HTMLFormElement>) {
-  event.preventDefault();
+  async function handleAdminLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!supabase) {
+      setNotice("Supabase isn't configured.");
+      return;
+    }
 
-  if (!supabase) {
-    setNotice("Supabase isn't configured.");
-    return;
-  }
-
-  setAdminBusy(true);
-
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    setAdminBusy(true);
+    const { error } = await supabase.auth.signInWithPassword({
       email: adminEmail.trim(),
       password: adminPassword,
     });
+    setAdminBusy(false);
 
     if (error) {
       setNotice("Admin login failed. Check the email and password.");
       return;
     }
 
-    if (!data.user) {
-      setNotice("Login succeeded, but no user was returned.");
-      return;
-    }
-
     setAdminPassword("");
-
-    // Refresh the app's authentication state
-    const { data: sessionData } = await supabase.auth.getSession();
-
-    if (!sessionData.session) {
-      setNotice("Login succeeded, but the session wasn't found. Please try again.");
-      return;
-    }
-
     setNotice("Admin signed in ❤️");
-
-    // Refresh the app so its admin state can update
-    window.dispatchEvent(new Event("admin-login-success"));
-  } catch (error) {
-    console.error("Admin login error:", error);
-    setNotice("Something went wrong while signing in.");
-  } finally {
-    setAdminBusy(false);
   }
-}
 
   async function handleAdminPasswordReset(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -377,8 +355,9 @@ async function handleAdminLogin(event: FormEvent<HTMLFormElement>) {
         image_name: file.name,
         storage_path: storagePath,
         sort_order: photos.length,
+        memory_text: "",
       })
-      .select("id,image_url,storage_path")
+      .select("id,image_url,storage_path,memory_text")
       .single();
 
     if (insertError) {
@@ -392,11 +371,39 @@ async function handleAdminLogin(event: FormEvent<HTMLFormElement>) {
 
     setPhotos((previous) => [
       ...previous,
-      { id: row.id, url: row.image_url, storagePath: row.storage_path ?? null },
+      { id: row.id, url: row.image_url, storagePath: row.storage_path ?? null, memoryText: row.memory_text ?? "" },
     ]);
     setUploading(false);
     setNotice("Photo saved for everyone ❤️");
     input.value = "";
+  }
+
+  function updatePhotoMemory(photoId: string, memoryText: string) {
+    setPhotos((previous) => previous.map((photo) =>
+      photo.id === photoId ? { ...photo, memoryText } : photo
+    ));
+  }
+
+  async function savePhotoMemory(photo: GalleryPhoto) {
+    if (!supabase || !isAdmin) {
+      setNotice("Only the authorized admin can save memories.");
+      return;
+    }
+
+    setSavingMemoryId(photo.id);
+    const { error } = await supabase
+      .from("gallery_images")
+      .update({ memory_text: photo.memoryText })
+      .eq("id", photo.id);
+    setSavingMemoryId(null);
+
+    if (error) {
+      console.error("Memory save failed:", error);
+      setNotice("Couldn't save this memory. Check the gallery_images UPDATE policy.");
+      return;
+    }
+
+    setNotice(`Memory ${photos.findIndex((item) => item.id === photo.id) + 1} saved ❤️`);
   }
 
   async function removePhoto(photo: GalleryPhoto) {
@@ -560,7 +567,22 @@ async function handleAdminLogin(event: FormEvent<HTMLFormElement>) {
             {photos.length > 0 ? <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {photos.map((photo, index) => <article key={photo.id} className="group overflow-hidden rounded-2xl border border-white/10 bg-zinc-950">
                 <img src={photo.url} alt={`Memory ${index + 1}`} loading="lazy" className="aspect-square w-full object-cover transition duration-500 group-hover:scale-105" onError={(event) => { event.currentTarget.style.opacity = "0.35"; }} />
-                <div className="flex items-center justify-between gap-2 px-4 py-3"><p className="text-sm text-zinc-400">Memory {index + 1} ♥</p>{isAdmin && <button type="button" onClick={() => void removePhoto(photo)} className="text-xs text-zinc-600 transition hover:text-red-400">Remove</button>}</div>
+                <div className="flex items-center justify-between gap-2 px-4 py-3"><p className="text-sm font-semibold text-rose-300">Memory {index + 1} ♥</p>{isAdmin && <button type="button" onClick={() => void removePhoto(photo)} className="text-xs text-zinc-600 transition hover:text-red-400">Remove</button>}</div>
+                {isAdmin ? <div className="px-4 pb-4">
+                  <textarea
+                    rows={3}
+                    value={photo.memoryText}
+                    onChange={(event) => updatePhotoMemory(photo.id, event.target.value)}
+                    placeholder={`Write the memory for photo ${index + 1}...`}
+                    className="w-full resize-y rounded-xl border border-white/10 bg-black/60 px-3 py-3 text-sm leading-6 text-zinc-200 outline-none placeholder:text-zinc-600 focus:border-red-500"
+                  />
+                  <button
+                    type="button"
+                    disabled={savingMemoryId === photo.id}
+                    onClick={() => void savePhotoMemory(photo)}
+                    className="mt-3 w-full rounded-full bg-red-600 px-4 py-2.5 text-sm font-bold transition hover:bg-red-500 disabled:opacity-50"
+                  >{savingMemoryId === photo.id ? "Saving memory…" : "Save Memory ✓"}</button>
+                </div> : photo.memoryText.trim() ? <p className="whitespace-pre-wrap break-words px-4 pb-5 text-sm leading-6 text-zinc-300">{photo.memoryText}</p> : null}
               </article>)}
             </div> : <p className="py-8 text-center text-zinc-500">No memories added yet.</p>}
             {isAdmin && <div className="mt-8 flex justify-center"><label className={`cursor-pointer rounded-full border border-white/15 px-6 py-3 text-sm font-semibold transition hover:border-red-500 hover:bg-red-950/30 ${uploading ? "pointer-events-none opacity-50" : ""}`}>+ Add a photo<input type="file" accept="image/*" disabled={uploading} onChange={(event) => void handlePhotoUpload(event)} className="hidden" /></label></div>}
